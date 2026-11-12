@@ -216,7 +216,7 @@ public class MenuScreen extends ScreenAdapter {
         // textos
         game.batch.begin();
         tmp.fromHsv((hue + 60f) % 360f, 0.35f, 1f);
-        text("GEOMETRY DASH", 0, 466, 2.6f, tmp.r, tmp.g, tmp.b, 1f, W, Align.center);
+        text("CUBE DASH", 0, 466, 2.6f, tmp.r, tmp.g, tmp.b, 1f, W, Align.center);
         text("Recorde: " + game.best, 0, 424, 1.1f, 1f, 1f, 1f, 0.85f, W, Align.center);
 
         text("SEU CUBO E NAVE", 52, 376, 0.9f, 1f, 1f, 1f, 0.8f, 0, Align.left);
