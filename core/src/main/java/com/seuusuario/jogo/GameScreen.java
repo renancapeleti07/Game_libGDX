@@ -68,6 +68,7 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
+        game.useMenuTrack();
         game.restartMusic();
         startRun();
     }

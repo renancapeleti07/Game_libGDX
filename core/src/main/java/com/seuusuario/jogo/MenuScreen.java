@@ -24,7 +24,8 @@ public class MenuScreen extends ScreenAdapter {
     static final float ROW1_Y = 166f, ROW2_Y = 114f, ICON_Y = 52f, ICON_SIZE = 40f, ICON_STEP = 52f;
     static final float CARD_X = 460f, CARD_W = 300f, CARD_H = 56f;
     static final float[] CARD_Y = {322f, 252f, 182f};
-    static final float PLAY_X = 460f, PLAY_Y = 70f, PLAY_W = 300f, PLAY_H = 80f;
+    static final float LEV_X = 460f, LEV_Y = 70f, LEV_W = 145f, LEV_H = 80f;
+    static final float INF_X = 615f, INF_Y = 70f, INF_W = 145f, INF_H = 80f;
 
     final MainGame game;
     final OrthographicCamera cam = new OrthographicCamera();
@@ -41,6 +42,7 @@ public class MenuScreen extends ScreenAdapter {
 
     @Override
     public void show() {
+        game.useMenuTrack();
         game.restartMusic();   // toca a musica escolhida como previa
     }
 
@@ -62,7 +64,13 @@ public class MenuScreen extends ScreenAdapter {
         return touch.x >= x && touch.x <= x + w && touch.y >= y && touch.y <= y + h;
     }
 
-    void play() {
+    void openLevels() {
+        leaving = true;
+        game.saveSettings();
+        game.setScreen(new LevelSelectScreen(game));
+    }
+
+    void playEndless() {
         leaving = true;
         game.saveSettings();
         game.setScreen(new GameScreen(game));
@@ -77,7 +85,11 @@ public class MenuScreen extends ScreenAdapter {
 
     void handleInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            play();
+            openLevels();
+            return;
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.I)) {
+            playEndless();
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) selectTrack(0);
@@ -98,7 +110,8 @@ public class MenuScreen extends ScreenAdapter {
             for (int i = 0; i < 3; i++) {
                 if (hit(CARD_X, CARD_Y[i], CARD_W, CARD_H)) selectTrack(i);
             }
-            if (hit(PLAY_X, PLAY_Y, PLAY_W, PLAY_H)) play();
+            if (hit(LEV_X, LEV_Y, LEV_W, LEV_H)) { openLevels(); return; }
+            if (hit(INF_X, INF_Y, INF_W, INF_H)) { playEndless(); return; }
             game.saveSettings();
         }
     }
@@ -205,18 +218,24 @@ public class MenuScreen extends ScreenAdapter {
             }
         }
 
-        // botao jogar
-        boolean overPlay = hit(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
+        // botao FASES (verde)
+        boolean overLev = hit(LEV_X, LEV_Y, LEV_W, LEV_H);
         sr.setColor(Color.WHITE);
-        sr.rect(PLAY_X - 3, PLAY_Y - 3, PLAY_W + 6, PLAY_H + 6);
-        sr.setColor(0.12f + (overPlay ? 0.08f : 0f) + 0.08f * pulse, 0.75f + (overPlay ? 0.1f : 0f), 0.28f, 1f);
-        sr.rect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
+        sr.rect(LEV_X - 3, LEV_Y - 3, LEV_W + 6, LEV_H + 6);
+        sr.setColor(0.12f + (overLev ? 0.08f : 0f) + 0.08f * pulse, 0.75f + (overLev ? 0.1f : 0f), 0.28f, 1f);
+        sr.rect(LEV_X, LEV_Y, LEV_W, LEV_H);
+        // botao INFINITO (laranja)
+        boolean overInf = hit(INF_X, INF_Y, INF_W, INF_H);
+        sr.setColor(Color.WHITE);
+        sr.rect(INF_X - 3, INF_Y - 3, INF_W + 6, INF_H + 6);
+        sr.setColor(0.90f + (overInf ? 0.08f : 0f), 0.50f + (overInf ? 0.1f : 0f) + 0.06f * pulse, 0.12f, 1f);
+        sr.rect(INF_X, INF_Y, INF_W, INF_H);
         sr.end();
 
         // textos
         game.batch.begin();
         tmp.fromHsv((hue + 60f) % 360f, 0.35f, 1f);
-        text("CUBE DASH", 0, 466, 2.6f, tmp.r, tmp.g, tmp.b, 1f, W, Align.center);
+        text("GEOMETRY DASH", 0, 466, 2.6f, tmp.r, tmp.g, tmp.b, 1f, W, Align.center);
         text("Recorde: " + game.best, 0, 424, 1.1f, 1f, 1f, 1f, 0.85f, W, Align.center);
 
         text("SEU CUBO E NAVE", 52, 376, 0.9f, 1f, 1f, 1f, 0.8f, 0, Align.left);
@@ -224,16 +243,18 @@ public class MenuScreen extends ScreenAdapter {
         text("COR 2", SW_X, ROW2_Y + 48, 0.9f, 1f, 1f, 1f, 0.8f, 0, Align.left);
         text("ICONE", SW_X, ICON_Y + 58, 0.9f, 1f, 1f, 1f, 0.8f, 0, Align.left);
 
-        text("MUSICA  (teclas 1, 2, 3)", CARD_X, 398, 0.9f, 1f, 1f, 1f, 0.8f, 0, Align.left);
+        text("MUSICA DO MODO INFINITO (teclas 1, 2, 3)", CARD_X, 398, 0.9f, 1f, 1f, 1f, 0.8f, 0, Align.left);
         for (int i = 0; i < 3; i++) {
             text(MainGame.TRACK_NAMES[i], CARD_X + 16, CARD_Y[i] + 38, 1.2f, 1f, 1f, 1f, 1f, 0, Align.left);
             text((int) MainGame.TRACK_BPM[i] + " BPM", CARD_X + 16, CARD_Y[i] + 19, 0.8f, 1f, 1f, 1f, 0.7f, 0, Align.left);
         }
 
-        text("JOGAR", PLAY_X, PLAY_Y + PLAY_H / 2f + 12f, 2.2f, 1f, 1f, 1f, 1f, PLAY_W, Align.center);
-        text("ENTER / ESPACO", PLAY_X, PLAY_Y - 8, 0.8f, 1f, 1f, 1f, 0.7f, PLAY_W, Align.center);
+        text("FASES", LEV_X, LEV_Y + LEV_H / 2f + 11f, 1.8f, 1f, 1f, 1f, 1f, LEV_W, Align.center);
+        text("INFINITO", INF_X, INF_Y + INF_H / 2f + 11f, 1.4f, 1f, 1f, 1f, 1f, INF_W, Align.center);
+        text("ENTER", LEV_X, LEV_Y - 8, 0.8f, 1f, 1f, 1f, 0.7f, LEV_W, Align.center);
+        text("tecla I", INF_X, INF_Y - 8, 0.8f, 1f, 1f, 1f, 0.7f, INF_W, Align.center);
 
-        text("Cubo: ESPACO pula   |   Orbe amarelo: aperte no ar   |   Nave: segure ESPACO   |   ESC: menu",
+        text("Pular / subir: ESPACO, SETA CIMA ou clique   |   Fases: ENTER   |   Infinito: I   |   ESC: voltar",
              0, 22, 0.75f, 1f, 1f, 1f, 0.7f, W, Align.center);
         game.batch.end();
         game.font.getData().setScale(1f);

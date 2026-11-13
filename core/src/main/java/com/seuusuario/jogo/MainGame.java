@@ -11,8 +11,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 
-/** Classe principal: guarda recursos compartilhados e as escolhas do jogador. */
+/** Classe principal: guarda recursos compartilhados, escolhas do jogador e progresso das fases. */
 public class MainGame extends Game {
+
+    /** Coloque true para testar: libera todas as fases. */
+    public static final boolean UNLOCK_ALL = false;
+
+    public static final int LEVEL_COUNT = 5;
 
     public static final String[] TRACK_NAMES = {"Neon Rush", "Sunset Drive", "Cyber Chase"};
     public static final String[] TRACK_FILES = {"music0.wav", "music1.wav", "music2.wav"};
@@ -36,6 +41,10 @@ public class MainGame extends Game {
     // Escolhas do jogador
     public int color1 = 0, color2 = 7, icon = 1, track = 0, best = 0;
 
+    // Progresso das fases
+    public int[] levelBest = new int[LEVEL_COUNT];   // melhor porcentagem (0..100)
+    public int levelsUnlocked = 1;
+
     // Recursos compartilhados
     public ShapeRenderer sr;
     public SpriteBatch batch;
@@ -43,11 +52,12 @@ public class MainGame extends Game {
     public Music music;
     public Sound jumpSnd, deathSnd, orbSnd, portalSnd;
     Preferences prefs;
+    int loadedTrack = -1;
 
     @Override
     public void create() {
         sr = new ShapeRenderer();
-        sr.setAutoShapeType(true);
+        sr.setAutoShapeType(true);   // necessario para sr.set(Line/Filled) funcionar
         batch = new SpriteBatch();
         font = new BitmapFont();
 
@@ -62,24 +72,54 @@ public class MainGame extends Game {
         icon = MathUtils.clamp(prefs.getInteger("icon", 1), 0, ICON_COUNT - 1);
         track = MathUtils.clamp(prefs.getInteger("track", 0), 0, TRACK_FILES.length - 1);
         best = prefs.getInteger("best", 0);
+        levelsUnlocked = MathUtils.clamp(prefs.getInteger("unlocked", 1), 1, LEVEL_COUNT);
+        for (int i = 0; i < LEVEL_COUNT; i++) levelBest[i] = prefs.getInteger("lvbest" + i, 0);
 
         loadTrack(track);
         setScreen(new MenuScreen(this));
     }
 
-    public void loadTrack(int i) {
+    // ---------------- musica ----------------
+    private void loadMusicFile(int i) {
         boolean wasPlaying = music != null && music.isPlaying();
         if (music != null) { music.stop(); music.dispose(); }
-        track = i;
         music = Gdx.audio.newMusic(Gdx.files.internal(TRACK_FILES[i]));
         music.setLooping(true);
         music.setVolume(0.6f);
+        loadedTrack = i;
         if (wasPlaying) music.play();
+    }
+
+    /** Escolhe a musica do menu / modo infinito (e lembra a escolha). */
+    public void loadTrack(int i) {
+        loadMusicFile(i);
+        track = i;
+    }
+
+    /** Usa uma musica temporariamente (fases), sem mudar a escolha do menu. */
+    public void useTrack(int i) {
+        if (loadedTrack != i) loadMusicFile(i);
+    }
+
+    /** Volta para a musica escolhida no menu. */
+    public void useMenuTrack() {
+        useTrack(track);
     }
 
     public void restartMusic() {
         music.stop();
         music.play();
+    }
+
+    // ---------------- progresso ----------------
+    public boolean isUnlocked(int level) {
+        return UNLOCK_ALL || level < levelsUnlocked;
+    }
+
+    public void submitLevel(int level, int percent) {
+        if (percent > levelBest[level]) levelBest[level] = percent;
+        if (percent >= 100 && level + 1 >= levelsUnlocked) levelsUnlocked = Math.min(LEVEL_COUNT, level + 2);
+        saveSettings();
     }
 
     public void saveSettings() {
@@ -88,6 +128,8 @@ public class MainGame extends Game {
         prefs.putInteger("icon", icon);
         prefs.putInteger("track", track);
         prefs.putInteger("best", best);
+        prefs.putInteger("unlocked", levelsUnlocked);
+        for (int i = 0; i < LEVEL_COUNT; i++) prefs.putInteger("lvbest" + i, levelBest[i]);
         prefs.flush();
     }
 

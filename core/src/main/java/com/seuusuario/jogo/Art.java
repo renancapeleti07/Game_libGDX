@@ -92,6 +92,17 @@ public final class Art {
         cube(sr, wx(cx, -1, 10, cs, sn), wy(cy, -1, 10, cs, sn), 22f, deg, c1, c2, icon);
     }
 
+    /** Seta da onda (modo wave), centrada em (cx, cy). */
+    public static void wave(ShapeRenderer sr, float cx, float cy, float deg, Color c1, Color c2) {
+        float cs = MathUtils.cosDeg(deg), sn = MathUtils.sinDeg(deg);
+        sr.setColor(Color.WHITE);
+        tri(sr, cx, cy, cs, sn, -11, -9, -11, 9, 14, 0);
+        sr.setColor(c1);
+        tri(sr, cx, cy, cs, sn, -8, -6, -8, 6, 9, 0);
+        sr.setColor(c2);
+        tri(sr, cx, cy, cs, sn, -5, -3, -5, 3, 3, 0);
+    }
+
     /** Anel (use com ShapeRenderer em modo Line). */
     public static void ring(ShapeRenderer sr, float x, float y, float r, int thick) {
         for (int k = 0; k < thick; k++) sr.circle(x, y, r - k);
